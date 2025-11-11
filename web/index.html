@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1726">
+  <title>Numerical solver study</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Numerical solver study home">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>Numerical <span class="brand-accent">solver study</span></span>
+    </a>
+    <div class="engine-label">C++17 · serial / OpenMP / MPI</div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">POISSON SOLVER / CAVITY SIMULATION</div>
+        <h1>How much does this <em>solver cost?</em></h1>
+        <p>I measure a Jacobi Poisson solver on its own, then use it inside a cavity-flow simulation. The same cavity workload lets me compare serial, OpenMP, and MPI runs against a checked result.</p>
+        <a class="text-link" href="#benchmark">Start with the benchmark <span aria-hidden="true">↘</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="art-grid"></div>
+        <div class="art-ring ring-one"></div>
+        <div class="art-ring ring-two"></div>
+        <div class="art-ring ring-three"></div>
+        <div class="art-center"></div>
+        <span class="art-tag tag-one">∇²ψ = −ω</span>
+        <span class="art-tag tag-two">5-point stencil</span>
+      </div>
+    </section>
+
+    <section class="benchmark-section" id="benchmark">
+      <div class="section-heading">
+        <div><div class="eyebrow">01 / ALGORITHM</div><h2>Poisson benchmark</h2></div>
+        <p>The solver uses Jacobi iteration to solve a grid problem with a known answer. That lets us check error as well as runtime.</p>
+      </div>
+      <div class="benchmark-panel panel">
+        <div class="benchmark-intro">
+          <div>
+            <h3>What happens as the grid grows?</h3>
+            <p>Run the same problem at 17, 33, 65, and 129 points per side. Each case uses a residual limit of 10<sup>−6</sup>. Short solves are repeated in a batch; the table reports the median time per solve from three batches.</p>
+          </div>
+          <button class="run-button benchmark-button" id="bench-button" type="button">Run benchmark <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="benchmark-status" id="bench-status" role="status">Results will appear here. The 129 × 129 case takes the longest.</p>
+        <div class="benchmark-results" id="bench-results" hidden>
+          <div class="history-table-wrap"><table>
+            <thead><tr><th>Grid</th><th>Interior cells</th><th>Jacobi sweeps</th><th>Median time / solve</th><th>Change in time</th><th>Maximum error</th></tr></thead>
+            <tbody id="bench-body"></tbody>
+          </table></div>
+          <p class="benchmark-note" id="bench-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">02 / SIMULATION</div>
+          <h2>Cavity test case</h2>
+        </div>
+        <p>The cavity uses the same Poisson solver in a time-stepping program. Change a setting to see the flow and the cost of computing it.</p>
+      </div>
+
+      <div class="work-grid">
+        <aside class="controls panel">
+          <div class="panel-heading">
+            <span class="step-icon">✳</span>
+            <div><strong>Run settings</strong><small>2D lid-driven cavity · serial C++</small></div>
+          </div>
+
+          <label class="field" for="grid">
+            <span>Grid size <small>Points along each side</small></span>
+            <select id="grid">
+              <option value="17">17 × 17 · quick</option>
+              <option value="33" selected>33 × 33 · balanced</option>
+              <option value="65">65 × 65 · detailed</option>
+            </select>
+          </label>
+
+          <label class="field" for="reynolds">
+            <span>Reynolds number <small>Changes the flow pattern</small></span>
+            <output id="reynolds-value" for="reynolds">100</output>
+          </label>
+          <input id="reynolds" type="range" min="25" max="400" step="25" value="100">
+          <div class="range-ends"><span>25</span><span>400</span></div>
+
+          <label class="field steps-label" for="steps">
+            <span>Timesteps <small>More steps evolve the flow longer</small></span>
+            <output id="steps-value" for="steps">600</output>
+          </label>
+          <input id="steps" type="range" min="100" max="4000" step="100" value="600">
+          <div class="range-ends"><span>100</span><span>4,000</span></div>
+
+          <div class="preset-heading">Examples</div>
+          <div class="presets">
+            <button type="button" data-grid="17" data-re="100" data-steps="300">Fast preview</button>
+            <button type="button" data-grid="33" data-re="100" data-steps="1200">Main vortex</button>
+            <button type="button" data-grid="33" data-re="400" data-steps="2000">Higher Re</button>
+          </div>
+
+          <button class="run-button" id="run-button" type="button"><span>Run simulation</span><span aria-hidden="true">→</span></button>
+          <p class="control-note">These short runs show the flow while it is still changing. They are not steady-state validation runs.</p>
+        </aside>
+
+        <section class="result panel" aria-live="polite">
+          <div class="result-top">
+            <div><div class="eyebrow">03 / RESULT</div><h2>Flow field</h2></div>
+            <span class="result-badge" id="result-badge">AWAITING RUN</span>
+          </div>
+
+          <div class="empty-state" id="empty-state">
+            <div class="empty-visual" aria-hidden="true"><span></span><span></span><span></span></div>
+            <strong>Run a case to see the flow</strong>
+            <p>Velocity streamlines and vorticity maps will appear here.</p>
+          </div>
+
+          <div class="result-content" id="result-content" hidden>
+            <div class="image-tabs" role="tablist" aria-label="Flow visualization">
+              <button type="button" class="active" data-image="velocity" role="tab" aria-selected="true">Velocity + streamlines</button>
+              <button type="button" data-image="vorticity" role="tab" aria-selected="false">Vorticity</button>
+            </div>
+            <div class="plot-frame"><img id="flow-image" alt="Computed cavity flow visualization"></div>
+            <p class="plot-caption" id="plot-caption"></p>
+          </div>
+
+          <div class="run-status" id="run-status" role="status"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="analysis-section">
+      <div class="section-heading">
+        <div><div class="eyebrow">04 / TIMING</div><h2>Cost of this run</h2></div>
+        <p>These measurements show which parts of this serial run take time. The OpenMP comparison below holds the workload fixed.</p>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card"><span>Numerical runtime</span><strong id="runtime-value">—</strong><small>Excludes saving images and CSV</small></div>
+        <div class="metric-card"><span>Poisson solve share</span><strong id="poisson-value">—</strong><small>Fraction of numerical runtime</small></div>
+        <div class="metric-card"><span>Average Jacobi sweeps</span><strong id="sweeps-value">—</strong><small>Per timestep</small></div>
+        <div class="metric-card"><span>Final Poisson residual</span><strong id="residual-value">—</strong><small>Equation error after the last solve</small></div>
+      </div>
+      <div class="time-strip" id="time-strip" hidden>
+        <div class="strip-title"><strong>Kernel time split</strong><span id="time-share-label"></span></div>
+        <div class="strip-track"><div id="poisson-bar"></div><div id="other-bar"></div></div>
+        <div class="strip-legend"><span><i class="key-poisson"></i> Poisson</span><span><i class="key-other"></i> Velocity, boundaries, transport</span></div>
+      </div>
+    </section>
+
+    <section class="benchmark-section" id="openmp-benchmark">
+      <div class="section-heading">
+        <div><div class="eyebrow">05 / PARALLEL EXECUTION</div><h2>OpenMP comparison</h2></div>
+        <p>Run the same 65 × 65 cavity case with serial C++ and 1, 2, and 4 OpenMP threads. Compare the fields before comparing time.</p>
+      </div>
+      <div class="benchmark-panel panel">
+        <div class="benchmark-intro">
+          <div>
+            <h3>Does adding threads reduce runtime?</h3>
+            <p>Each version runs 100 timesteps, three times. The table uses median numerical runtime. Speedup is serial median divided by OpenMP median; efficiency divides speedup by thread count.</p>
+          </div>
+          <button class="run-button benchmark-button" id="openmp-button" type="button">Run comparison <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="benchmark-status" id="openmp-status" role="status">This experiment takes around half a minute on the current machine.</p>
+        <div class="benchmark-results" id="openmp-results" hidden>
+          <div class="history-table-wrap"><table>
+            <thead><tr><th>Version</th><th>Threads</th><th>Median time</th><th>Speedup vs serial</th><th>Efficiency</th></tr></thead>
+            <tbody id="openmp-body"></tbody>
+          </table></div>
+          <p class="benchmark-note" id="openmp-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="benchmark-section" id="mpi-benchmark">
+      <div class="section-heading">
+        <div><div class="eyebrow">06 / DISTRIBUTED EXECUTION</div><h2>MPI comparison</h2></div>
+        <p>Each MPI process owns a strip of rows. Neighboring processes exchange ghost rows for the stencil, and all processes agree on the convergence residual.</p>
+      </div>
+      <div class="benchmark-panel panel">
+        <div class="benchmark-intro">
+          <div>
+            <h3>When does communication pay off?</h3>
+            <p>Run the same 65 × 65, 100-step case with serial C++ and 1, 2, and 4 MPI processes. Each configuration runs three times. Saved fields are checked against serial before timing is reported.</p>
+          </div>
+          <button class="run-button benchmark-button" id="mpi-button" type="button">Run MPI comparison <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="benchmark-status" id="mpi-status" role="status">This experiment takes around half a minute on the current machine.</p>
+        <div class="benchmark-results" id="mpi-results" hidden>
+          <div class="history-table-wrap"><table>
+            <thead><tr><th>Version</th><th>Processes</th><th>Median time</th><th>Speedup vs serial</th><th>Efficiency</th></tr></thead>
+            <tbody id="mpi-body"></tbody>
+          </table></div>
+          <p class="benchmark-note" id="mpi-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-section" id="history-section" hidden>
+      <div class="section-heading"><div><div class="eyebrow">07 / SIMULATION RUNS</div><h2>Runs in this session</h2></div><p>Compare cases you have run since opening this page.</p></div>
+      <div class="history-table-wrap"><table><thead><tr><th>Case</th><th>Steps</th><th>Runtime</th><th>Poisson share</th><th>View</th></tr></thead><tbody id="history-body"></tbody></table></div>
+    </section>
+
+    <section class="method-note">
+      <span class="method-number">METHOD</span>
+      <div><h2>What is being compared</h2><p>The Poisson benchmark uses a manufactured problem, so its numerical error can be checked. The cavity simulation tests the same solver as part of a larger program. The OpenMP and MPI experiments hold that workload fixed and check every saved field against serial. Timings come from this computer and should be repeated under controlled conditions before drawing hardware conclusions.</p></div>
+    </section>
+  </main>
+
+  <footer><span>Numerical solver study</span><span>C++17 · serial / OpenMP / MPI</span></footer>
+</body>
+</html>
